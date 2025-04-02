@@ -98,20 +98,40 @@ import { connectRabbitMQ } from "./rabbitmq";
 /**
  * Get message from Headers
  */
+// export const receiveMessages = async () => {
+//     const { channel } = await connectRabbitMQ();
+//     const exchangeType = "headers"
+//     const exchange = "class_delete_notification_using_header_exchange";
+//     await channel.assertExchange(exchange, exchangeType, { durable: true });
+//     const queue = await channel.assertQueue('', { exclusive: true });
+//     const headers = {
+//         "x-match": 'all',
+//         "notification-type": "class_notification_toUser",
+//         "content-type": "notification"
+//     }
+//     await channel.bindQueue(queue.queue, exchange, '', headers)
+//     console.log("🚀 Waiting for messages...");
+//     channel.consume(queue.queue, async (msg: any) => {
+//         if (msg) {
+//             const receivedData = JSON.parse(msg.content.toString());
+//             console.log(`📩 Received: ${JSON.stringify(receivedData)}`);
+//             // Acknowledge the message (removes from queue)
+//             channel.ack(msg);
+//         }
+//     }, { noAck: false });
+// };
+
+/**
+ * Delayed Queue
+ */
 export const receiveMessages = async () => {
     const { channel } = await connectRabbitMQ();
-    const exchangeType = "headers"
-    const exchange = "class_delete_notification_using_header_exchange";
-    await channel.assertExchange(exchange, exchangeType, { durable: true });
-    const queue = await channel.assertQueue('', { exclusive: true });
-    const headers = {
-        "x-match": 'all',
-        "notification-type": "class_notification_toUser",
-        "content-type": "notification"
-    }
-    await channel.bindQueue(queue.queue, exchange, '', headers)
+    // Declare multiple queues
+    const processingQueue = "processing_queue";
+    await channel.assertQueue(processingQueue, { durable: true });
+
     console.log("🚀 Waiting for messages...");
-    channel.consume(queue.queue, async (msg: any) => {
+    channel.consume(processingQueue, async (msg: any) => {
         if (msg) {
             const receivedData = JSON.parse(msg.content.toString());
             console.log(`📩 Received: ${JSON.stringify(receivedData)}`);
